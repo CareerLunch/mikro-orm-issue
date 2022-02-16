@@ -4,7 +4,8 @@ const core_1 = require("@mikro-orm/core");
 const Category_1 = require("./entities/Category");
 const Company_1 = require("./entities/Company");
 async function main() {
-    const { em } = await core_1.MikroORM.init();
+    const orm = await core_1.MikroORM.init();
+    const em = orm.em.fork();
     const companiesRepository = em.getRepository(Company_1.Company);
     const count = await companiesRepository.count();
     if (count === 0) {
@@ -49,6 +50,8 @@ async function main() {
             },
         ],
     });
-    console.log(companies.map((company) => company.name));
+    await orm.close();
+    console.log(companies.length === 1 ? companies[0] : companies);
+    // process.exit(0);
 }
 main();

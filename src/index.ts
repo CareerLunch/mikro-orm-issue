@@ -3,7 +3,8 @@ import { Category } from "./entities/Category";
 import { Company } from "./entities/Company";
 
 async function main() {
-  const { em } = await MikroORM.init();
+  const orm = await MikroORM.init();
+  const em = orm.em.fork();
 
   const companiesRepository = em.getRepository(Company);
   const count = await companiesRepository.count();
@@ -55,7 +56,9 @@ async function main() {
       },
     ],
   });
-  console.log(companies.map((company) => company.name));
+
+  await orm.close();
+  console.log(companies.length === 1 ? companies[0] : companies);
 }
 
 main();
