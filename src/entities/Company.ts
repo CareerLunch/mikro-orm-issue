@@ -15,7 +15,7 @@ export class Company {
   @Property()
   public name: string;
 
-  @ManyToMany(() => Category)
+  @ManyToMany({ entity: () => Category, inversedBy: "companies" })
   public categories = new Collection<Category>(this);
 
   public constructor({ name }: { name: string }) {

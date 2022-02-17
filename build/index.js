@@ -3,55 +3,46 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const core_1 = require("@mikro-orm/core");
 const Category_1 = require("./entities/Category");
 const Company_1 = require("./entities/Company");
-async function main() {
+const log_1 = require("./log");
+const seed_1 = require("./seed");
+async function main(action) {
+    if (action !== "add" && action !== "remove" && action !== "log") {
+        return console.log('Error: the only param must be "add" or "remove"\n' +
+            "Usage:\tyarn start add\n\tyarn start remove\n\tyarn start log");
+    }
     const orm = await core_1.MikroORM.init();
     const em = orm.em.fork();
-    const companiesRepository = em.getRepository(Company_1.Company);
-    const count = await companiesRepository.count();
-    if (count === 0) {
-        // Seed
-        const portugal = new Category_1.Category({
-            type: "PORTUGAL",
-        });
-        em.persist(portugal);
-        const singapore = new Category_1.Category({
-            type: "SINGAPORE",
-        });
-        em.persist(singapore);
-        const companyPortugal = new Company_1.Company({
-            name: "Company (Portugal)",
-        });
-        companyPortugal.categories.add(portugal);
-        em.persist(companyPortugal);
-        const companySingapore = new Company_1.Company({
-            name: "Company (Singapore)",
-        });
-        companySingapore.categories.add(singapore);
-        em.persist(companySingapore);
-        const companyPortugalAndSingapore = new Company_1.Company({
-            name: "Company (Portugal + Singapore)",
-        });
-        companyPortugalAndSingapore.categories.add(portugal);
-        companyPortugalAndSingapore.categories.add(singapore);
-        em.persist(companyPortugalAndSingapore);
-        await em.flush();
+    if ((await em.count(Company_1.Company)) === 0) {
+        await (0, seed_1.seed)(orm);
     }
-    const companies = await companiesRepository.find({
-        $and: [
-            {
-                categories: {
-                    type: "PORTUGAL",
-                },
-            },
-            {
-                categories: {
-                    type: "SINGAPORE",
-                },
-            },
-        ],
-    });
+    if (action === "log") {
+        await (0, log_1.log)(orm);
+        return;
+    }
+    const companyPortugal = await em.findOneOrFail(Company_1.Company, { name: "Company (Portugal)" }
+    // { populate: ["categories"] }
+    );
+    const portugal = await em.findOneOrFail(Category_1.Category, { type: "PORTUGAL" }
+    // { populate: ["companies"] }
+    );
+    companyPortugal.categories[action](portugal);
+    const companySingapore = await em.findOneOrFail(Company_1.Company, { name: "Company (Singapore)" }
+    // { populate: ["categories"] }
+    );
+    const singapore = await em.findOneOrFail(Category_1.Category, { type: "SINGAPORE" }
+    // { populate: ["companies"] }
+    );
+    singapore.companies[action](companySingapore);
+    /**
+     * This flush causes:
+     * [query] begin
+     * [query] insert into `company_categories` (`company_id`, `category_id`) values (1, 1) [took 1 ms]
+     * [query] commit
+     *
+     * This links the "portugal" group, but not the "singapore" group
+     */
+    await em.flush();
+    await (0, log_1.log)(orm);
     await orm.close();
-    console.log(companies.length === 1 ? companies[0] : companies);
-    // process.exit(0);
 }
-main();
+main(process.argv[2]);

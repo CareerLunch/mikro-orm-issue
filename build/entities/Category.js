@@ -27,7 +27,7 @@ __decorate([
     __metadata("design:type", String)
 ], Category.prototype, "type", void 0);
 __decorate([
-    (0, core_1.ManyToMany)(() => Company_1.Company, (company) => company.categories),
+    (0, core_1.ManyToMany)({ entity: () => Company_1.Company, mappedBy: "categories" }),
     __metadata("design:type", Object)
 ], Category.prototype, "companies", void 0);
 Category = __decorate([

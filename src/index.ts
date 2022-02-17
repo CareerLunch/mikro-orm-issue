@@ -1,64 +1,72 @@
-import { MikroORM } from "@mikro-orm/core";
+import { MikroORM, wrap } from "@mikro-orm/core";
 import { Category } from "./entities/Category";
 import { Company } from "./entities/Company";
+import { log } from "./log";
+import { seed } from "./seed";
 
-async function main() {
+async function main(action: string) {
+  if (action !== "add" && action !== "remove" && action !== "log") {
+    return console.log(
+      'Error: the only param must be "add" or "remove"\n' +
+        "Usage:\tyarn start add\n\tyarn start remove\n\tyarn start log"
+    );
+  }
+
   const orm = await MikroORM.init();
   const em = orm.em.fork();
 
-  const companiesRepository = em.getRepository(Company);
-  const count = await companiesRepository.count();
-  if (count === 0) {
-    // Seed
-    const portugal = new Category({
-      type: "PORTUGAL",
-    });
-    em.persist(portugal);
-
-    const singapore = new Category({
-      type: "SINGAPORE",
-    });
-    em.persist(singapore);
-
-    const companyPortugal = new Company({
-      name: "Company (Portugal)",
-    });
-    companyPortugal.categories.add(portugal);
-    em.persist(companyPortugal);
-
-    const companySingapore = new Company({
-      name: "Company (Singapore)",
-    });
-    companySingapore.categories.add(singapore);
-    em.persist(companySingapore);
-
-    const companyPortugalAndSingapore = new Company({
-      name: "Company (Portugal + Singapore)",
-    });
-    companyPortugalAndSingapore.categories.add(portugal);
-    companyPortugalAndSingapore.categories.add(singapore);
-    em.persist(companyPortugalAndSingapore);
-
-    await em.flush();
+  if ((await em.count(Company)) === 0) {
+    await seed(orm);
   }
 
-  const companies = await companiesRepository.find({
-    $and: [
-      {
-        categories: {
-          type: "PORTUGAL",
-        },
-      },
-      {
-        categories: {
-          type: "SINGAPORE",
-        },
-      },
-    ],
-  });
+  if (action === "log") {
+    await log(orm);
+    return;
+  }
 
+  const companyPortugal = await em.findOneOrFail(
+    Company,
+    { name: "Company (Portugal)" }
+    // { populate: ["categories"] }
+  );
+  const portugal = await em.findOneOrFail(
+    Category,
+    { type: "PORTUGAL" }
+    // { populate: ["companies"] }
+  );
+  companyPortugal.categories[action](portugal);
+
+  const companySingapore = await em.findOneOrFail(
+    Company,
+    { name: "Company (Singapore)" }
+    // { populate: ["categories"] }
+  );
+  const singapore = await em.findOneOrFail(
+    Category,
+    { type: "SINGAPORE" }
+    // { populate: ["companies"] }
+  );
+  /**
+   * See the docs:
+   * https://mikro-orm.io/docs/collections#propagation-of-collections-add-and-remove-operations
+   * Collections on both sides have to be initialized, otherwise propagation won't work.
+   * Although this propagation works also for M:N inverse side, you should always use owning
+   * side to manipulate the collection.
+   */
+  singapore.companies[action](companySingapore);
+
+  /**
+   * This flush causes:
+   * [query] begin
+   * [query] insert into `company_categories` (`company_id`, `category_id`) values (1, 1) [took 1 ms]
+   * [query] commit
+   *
+   * This links the "portugal" group, but not the "singapore" group
+   */
+  await em.flush();
+
+  await log(orm);
   await orm.close();
-  console.log(companies.length === 1 ? companies[0] : companies);
 }
 
-main();
+main(process.argv[2]);

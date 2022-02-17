@@ -17,7 +17,7 @@ export class Category {
   @Property()
   public type: CategoryType;
 
-  @ManyToMany(() => Company, (company) => company.categories)
+  @ManyToMany({ entity: () => Company, mappedBy: "categories" })
   public companies = new Collection<Company>(this);
 
   public constructor({ type }: { type: CategoryType }) {
