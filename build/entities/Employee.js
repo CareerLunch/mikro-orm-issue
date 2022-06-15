@@ -29,8 +29,8 @@ __decorate([
 __decorate([
     (0, core_1.ManyToOne)({
         entity: () => Company_1.Company,
-        fieldName: 'company',
-        onDelete: 'set null',
+        fieldName: "company",
+        onDelete: "set null",
         nullable: true,
     }),
     __metadata("design:type", Company_1.Company)

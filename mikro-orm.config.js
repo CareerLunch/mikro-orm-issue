@@ -1,6 +1,6 @@
 module.exports = {
   entities: ["./build/entities"], // path to your JS entities (dist), relative to `baseDir`
-  dbName: "new.db",
+  dbName: "database.db",
   type: "sqlite",
   debug: true,
   allowGlobalContext: true,
