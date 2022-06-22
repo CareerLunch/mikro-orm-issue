@@ -8,7 +8,7 @@
   "scripts": {
     "build": "rimraf build && tsc",
     "start": "yarn build && node .",
-    "migration:create": "mikro-orm migration:create --initial",
+    "migration:create": "mikro-orm migration:create",
     "migration:up": "mikro-orm migration:up"
   },
   "dependencies": {

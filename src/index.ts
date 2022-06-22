@@ -1,101 +1,59 @@
 import { MikroORM } from "@mikro-orm/core";
-import { Company } from "./entities/Company";
-import { Employee } from "./entities/Employee";
-
-function getRandomCompanyName() {
-  return `Company_${Math.random().toString()}`;
-}
+import { Squad } from "./entities/Squad";
+import { Soldier } from "./entities/Soldier";
 
 async function main() {
-  let { em } = await MikroORM.init();
+  const orm = await MikroORM.init();
+  let { em } = orm;
+  await em.nativeDelete(Squad, {});
+  await em.nativeDelete(Soldier, {});
 
-  const luke = em.create(Employee, {
+  const luke = em.create(Soldier, {
     firstName: "Luke",
     lastName: "Skywalker",
   });
 
-  const leia = em.create(Employee, {
+  const leia = em.create(Soldier, {
     firstName: "Leia",
     lastName: "Organa",
   });
 
-  em.persistAndFlush([luke, leia]);
+  await em.persistAndFlush([luke, leia]);
 
   // To be sure that we are working with clean identity map
   em = em.fork();
 
-  const employees = await em.find(Employee, {});
+  const soldiers = await em.find(Soldier, {});
 
-  const company = em.create(Company, {
-    name: "Rebels",
-    employees,
+  const squad = em.create(Squad, {
+    type: "AIR",
+    formedAt: new Date(),
+    // soldiers are specified, we expect them to be linked automatically
+    soldiers,
   });
 
-  em.persistAndFlush(company);
+  // Why we need to do this to have squad<->soldier links working?
+  // soldiers.forEach((soldier) => soldier.squads.add(squad));
+
+  console.log("\n ***\nCreating squad with %d soldiers", soldiers.length);
+  await em.persistAndFlush(squad);
 
   // To be sure that we are working with clean identity map
   em = em.fork();
 
-  const fetchedCompanies = await em.find(
-    Company,
-    {},
-    { populate: ["employees"] }
+  const fetchedSquad = await em.findOneOrFail(
+    Squad,
+    { type: "AIR" },
+    { populate: ["soldiers"] }
   );
-  console.log("[START] Companies");
-  for (const fetchedCompany of fetchedCompanies) {
-    console.log(fetchedCompany);
-  }
-  console.log("[END] Companies");
+  console.log("\n ***\nFetched Squad:\n%O", fetchedSquad);
+  console.log(
+    "\n ***\nThe Squad has %d soldiers:\n%O",
+    fetchedSquad.soldiers.count(),
+    fetchedSquad.soldiers.getItems()
+  );
 
-  console.log("[START] Employees");
-  const fetchedEmployees = await em.find(Employee, {});
-  for (const fetchedEmployee of fetchedEmployees) {
-    console.log(fetchedEmployee);
-  }
-  console.log("[END] Employees");
-
-  // const employee = new Employee();
-  // employee.firstName = "Luk";
-  // employee.lastName = "Skywalker";
-  // em.persist(employee);
-
-  // await em.flush();
-
-  // const companies = await em.find(Company, {});
-  // const employees = await em.find(Employee, {});
-  // for (const comp of companies) {
-  //   console.log(`Comp name: ${comp.name}`);
-  // }
-  // for (const emp of employees) {
-  //   em.populate(emp, ["company"]);
-  //   console.log(
-  //     `Employee name: ${emp.firstName}, Compnay Id: ${
-  //       emp.company?.id ?? "null"
-  //     }`
-  //   );
-  // }
-
-  // const company = em.create(Company, {
-  //   name: getRandomCompanyName(),
-  //   employees: employees,
-  // });
-
-  // em.persist(company);
-  // await em.flush();
-
-  // const companyFromDb = await em.findOne(
-  //   Company,
-  //   { name: company.name },
-  //   { populate: ["employees"] }
-  // );
-
-  // if (companyFromDb) {
-  //   console.log(`Company name: ${companyFromDb.name}`);
-  //   console.log(`Company employees count: ${companyFromDb.employees.count()}`);
-  //   for (const employee of companyFromDb.employees) {
-  //     console.log(`Employee name: ${employee.firstName} ${employee.lastName}`);
-  //   }
-  // }
+  orm.close();
 }
 
 main();

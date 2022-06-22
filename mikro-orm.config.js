@@ -14,5 +14,6 @@ module.exports = {
     dropTables: true, // allow to disable table dropping
     safe: false, // allow to disable table and column dropping
     emit: "js", // migration generation mode
+		snapshot: false,
   },
 };

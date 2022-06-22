@@ -9,29 +9,30 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Category = void 0;
+exports.Soldier = void 0;
 const core_1 = require("@mikro-orm/core");
-const Company_1 = require("./Company");
-let Category = class Category {
-    constructor({ type }) {
-        this.companies = new core_1.Collection(this);
-        this.type = type;
+let Soldier = class Soldier {
+    constructor() {
+        this.squads = new core_1.Collection(this);
     }
 };
 __decorate([
     (0, core_1.PrimaryKey)(),
     __metadata("design:type", Number)
-], Category.prototype, "id", void 0);
+], Soldier.prototype, "id", void 0);
 __decorate([
     (0, core_1.Property)(),
     __metadata("design:type", String)
-], Category.prototype, "type", void 0);
+], Soldier.prototype, "firstName", void 0);
 __decorate([
-    (0, core_1.ManyToMany)(() => Company_1.Company, (company) => company.categories),
+    (0, core_1.Property)(),
+    __metadata("design:type", String)
+], Soldier.prototype, "lastName", void 0);
+__decorate([
+    (0, core_1.ManyToMany)({ entity: "Squad" }),
     __metadata("design:type", Object)
-], Category.prototype, "companies", void 0);
-Category = __decorate([
-    (0, core_1.Entity)(),
-    __metadata("design:paramtypes", [Object])
-], Category);
-exports.Category = Category;
+], Soldier.prototype, "squads", void 0);
+Soldier = __decorate([
+    (0, core_1.Entity)()
+], Soldier);
+exports.Soldier = Soldier;

@@ -1,79 +1,40 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const core_1 = require("@mikro-orm/core");
-const Company_1 = require("./entities/Company");
-const Employee_1 = require("./entities/Employee");
-function getRandomCompanyName() {
-    return `Company_${Math.random().toString()}`;
-}
+const Squad_1 = require("./entities/Squad");
+const Soldier_1 = require("./entities/Soldier");
 async function main() {
-    let { em } = await core_1.MikroORM.init();
-    const luke = em.create(Employee_1.Employee, {
+    const orm = await core_1.MikroORM.init();
+    let { em } = orm;
+    await em.nativeDelete(Squad_1.Squad, {});
+    await em.nativeDelete(Soldier_1.Soldier, {});
+    const luke = em.create(Soldier_1.Soldier, {
         firstName: "Luke",
         lastName: "Skywalker",
     });
-    const leia = em.create(Employee_1.Employee, {
+    const leia = em.create(Soldier_1.Soldier, {
         firstName: "Leia",
         lastName: "Organa",
     });
-    em.persistAndFlush([luke, leia]);
+    await em.persistAndFlush([luke, leia]);
     // To be sure that we are working with clean identity map
     em = em.fork();
-    const employees = await em.find(Employee_1.Employee, {});
-    const company = em.create(Company_1.Company, {
-        name: "Rebels",
-        employees,
+    const soldiers = await em.find(Soldier_1.Soldier, {});
+    const squad = em.create(Squad_1.Squad, {
+        type: "AIR",
+        formedAt: new Date(),
+        // soldiers are specified, we expect them to be linked automatically
+        soldiers,
     });
-    em.persistAndFlush(company);
+    // Why we need to do this to have squad<->soldier links working?
+    // soldiers.forEach((soldier) => soldier.squads.add(squad));
+    console.log("\n ***\nCreating squad with %d soldiers", soldiers.length);
+    await em.persistAndFlush(squad);
     // To be sure that we are working with clean identity map
     em = em.fork();
-    const fetchedCompanies = await em.find(Company_1.Company, {}, { populate: ["employees"] });
-    console.log("[START] Companies");
-    for (const fetchedCompany of fetchedCompanies) {
-        console.log(fetchedCompany);
-    }
-    console.log("[END] Companies");
-    console.log("[START] Employees");
-    const fetchedEmployees = await em.find(Employee_1.Employee, {});
-    for (const fetchedEmployee of fetchedEmployees) {
-        console.log(fetchedEmployee);
-    }
-    console.log("[END] Employees");
-    // const employee = new Employee();
-    // employee.firstName = "Luk";
-    // employee.lastName = "Skywalker";
-    // em.persist(employee);
-    // await em.flush();
-    // const companies = await em.find(Company, {});
-    // const employees = await em.find(Employee, {});
-    // for (const comp of companies) {
-    //   console.log(`Comp name: ${comp.name}`);
-    // }
-    // for (const emp of employees) {
-    //   em.populate(emp, ["company"]);
-    //   console.log(
-    //     `Employee name: ${emp.firstName}, Compnay Id: ${
-    //       emp.company?.id ?? "null"
-    //     }`
-    //   );
-    // }
-    // const company = em.create(Company, {
-    //   name: getRandomCompanyName(),
-    //   employees: employees,
-    // });
-    // em.persist(company);
-    // await em.flush();
-    // const companyFromDb = await em.findOne(
-    //   Company,
-    //   { name: company.name },
-    //   { populate: ["employees"] }
-    // );
-    // if (companyFromDb) {
-    //   console.log(`Company name: ${companyFromDb.name}`);
-    //   console.log(`Company employees count: ${companyFromDb.employees.count()}`);
-    //   for (const employee of companyFromDb.employees) {
-    //     console.log(`Employee name: ${employee.firstName} ${employee.lastName}`);
-    //   }
-    // }
+    const fetchedSquad = await em.findOneOrFail(Squad_1.Squad, { type: "AIR" }, { populate: ["soldiers"] });
+    console.log("\n ***\nFetched Squad:\n%O", fetchedSquad);
+    console.log("\n ***\nThe Squad has %d soldiers:\n%O", fetchedSquad.soldiers.count(), fetchedSquad.soldiers.getItems());
+    orm.close();
 }
 main();
