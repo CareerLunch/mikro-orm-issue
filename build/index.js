@@ -26,6 +26,8 @@ async function main() {
         // soldiers are specified, we expect them to be linked automatically
         soldiers,
     });
+    // This also doesn't work:
+    // squad.soldiers.add(...soldiers);
     // Why we need to do this to have squad<->soldier links working?
     // soldiers.forEach((soldier) => soldier.squads.add(squad));
     console.log("\n ***\nCreating squad with %d soldiers", soldiers.length);
