@@ -8,9 +8,6 @@ export class Participant {
 
   @ManyToMany({
     entity: "Group",
-    pivotTable: "_ParticipantToGroup",
-    joinColumn: "A",
-    inverseJoinColumn: "B",
     inversedBy: "participants",
   })
   public groups = new Collection<Group>(this);

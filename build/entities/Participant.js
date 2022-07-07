@@ -23,9 +23,6 @@ __decorate([
 __decorate([
     (0, core_1.ManyToMany)({
         entity: "Group",
-        pivotTable: "_ParticipantToGroup",
-        joinColumn: "A",
-        inverseJoinColumn: "B",
         inversedBy: "participants",
     }),
     __metadata("design:type", Object)
