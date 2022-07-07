@@ -9,29 +9,25 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Company = void 0;
+exports.Group = void 0;
 const core_1 = require("@mikro-orm/core");
-const Category_1 = require("./Category");
-let Company = class Company {
-    constructor({ name }) {
-        this.categories = new core_1.Collection(this);
-        this.name = name;
+let Group = class Group {
+    constructor() {
+        this.participants = new core_1.Collection(this);
     }
 };
 __decorate([
     (0, core_1.PrimaryKey)(),
     __metadata("design:type", Number)
-], Company.prototype, "id", void 0);
+], Group.prototype, "id", void 0);
 __decorate([
-    (0, core_1.Property)(),
-    __metadata("design:type", String)
-], Company.prototype, "name", void 0);
-__decorate([
-    (0, core_1.ManyToMany)({ entity: () => Category_1.Category, inversedBy: "companies" }),
+    (0, core_1.ManyToMany)({
+        entity: "Participant",
+        mappedBy: "groups",
+    }),
     __metadata("design:type", Object)
-], Company.prototype, "categories", void 0);
-Company = __decorate([
-    (0, core_1.Entity)(),
-    __metadata("design:paramtypes", [Object])
-], Company);
-exports.Company = Company;
+], Group.prototype, "participants", void 0);
+Group = __decorate([
+    (0, core_1.Entity)()
+], Group);
+exports.Group = Group;
